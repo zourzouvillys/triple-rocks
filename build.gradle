@@ -1,0 +1,51 @@
+repositories {
+  mavenCentral()
+  jcenter()
+}
+
+apply plugin: 'java-library'
+apply plugin: 'eclipse'
+
+group = 'io.zrz.triplerocks'
+version = 'master-SNAPSHOT'
+  
+sourceCompatibility = 8
+targetCompatibility = 8
+
+
+eclipse.project.name = 'triplerocks'
+
+
+configurations {
+  api 
+  'default' { extendsFrom api }
+}
+
+artifacts { api jar }
+
+artifacts { jar }
+
+
+dependencies {
+
+  api                 'org.apache.jena:jena-core:3.9.0'
+
+  implementation      'org.rocksdb:rocksdbjni:5.14.2'  
+  implementation      'com.google.guava:guava:26.0-jre'
+      
+  compileOnly         'org.eclipse.jdt:org.eclipse.jdt.annotation:2.1.150'
+  
+  testImplementation  'junit:junit:4.12'
+  testImplementation  'org.assertj:assertj-core:3.6.1'
+  testImplementation  'ch.qos.logback:logback-classic:1.2.3'  
+  testImplementation  'org.apache.jena:jena-arq:3.9.0'
+
+}
+
+
+jar {
+  manifest {
+    attributes ('Automatic-Module-Name': "zrz.triplerocks")
+  }
+}      
+
