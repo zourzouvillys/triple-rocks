@@ -31,7 +31,7 @@ public class JenaRocksStore extends AbstractRocksTripleStore {
     if ((s != null) && (p != null) && (o != null)) {
 
       // best case, direct single hit.
-      if (this.contains(s, p, o)) {
+      if (JenaRocksTransactionHandler.currentTxn(this).contains(s, p, o)) {
         return new SingletonIterator<>(new Triple(sn, pn, on));
       }
 
@@ -79,7 +79,7 @@ public class JenaRocksStore extends AbstractRocksTripleStore {
   }
 
   public ExtendedIterator<Triple> query(final IndexKind index, final byte[] key) {
-    return new JenaRocksIterator(this.createIterator(index), key, index);
+    return new JenaRocksIterator(JenaRocksTransactionHandler.currentTxn(this).createIterator(index), key, index);
   }
 
   private static byte[] toKey(final Node n) {
@@ -95,7 +95,9 @@ public class JenaRocksStore extends AbstractRocksTripleStore {
     final byte[] pk = toKey(p);
     final byte[] ok = toKey(o);
 
-    this.insert(sk, pk, ok);
+    JenaRocksTransactionHandler
+        .currentTxn(this)
+        .insert(sk, pk, ok);
 
   }
 
@@ -105,7 +107,9 @@ public class JenaRocksStore extends AbstractRocksTripleStore {
     final byte[] pk = toKey(p);
     final byte[] ok = toKey(o);
 
-    this.delete(sk, pk, ok);
+    JenaRocksTransactionHandler
+        .currentTxn(this)
+        .delete(sk, pk, ok);
 
   }
 

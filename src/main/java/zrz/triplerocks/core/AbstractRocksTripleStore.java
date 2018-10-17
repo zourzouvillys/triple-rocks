@@ -13,12 +13,15 @@ import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.rocksdb.Snapshot;
+import org.rocksdb.WriteBatch;
+import org.rocksdb.WriteBatchWithIndex;
 
-public class AbstractRocksTripleStore {
+public class AbstractRocksTripleStore implements TripleRocksAPI {
 
-  private static final byte[] EMPTY = new byte[] {};
+  static final byte[] EMPTY = new byte[] {};
 
-  private RocksDB db;
+  RocksDB db;
   protected final ColumnFamilyHandle[] indexes = new ColumnFamilyHandle[IndexKind.values().length];
 
   public AbstractRocksTripleStore(final Path path) {
@@ -52,6 +55,24 @@ public class AbstractRocksTripleStore {
     }
   }
 
+  /**
+   * create a new isolated view which answers all queries with a consistent view at the time it was made.
+   *
+   * any writes will be added to a {@link WriteBatchWithIndex}, and reads will see the writes made into it. once
+   * commited, it will be merged.
+   *
+   * note that no conflict detection is done. any writes which happened in another transaction will be overwritten. most
+   * notably if you perform any logic in the txn that depends on another value, that value may have gone or changed by
+   * the time you commited.
+   *
+   * @return
+   */
+
+  public TripleRocksTxn createTransaction() {
+    return TripleRocksTxn.begin(this);
+  }
+
+  @Override
   @SuppressWarnings("resource")
   public boolean contains(final byte[] s, final byte[] p, final byte[] o) {
 
@@ -75,6 +96,15 @@ public class AbstractRocksTripleStore {
 
   }
 
+  public Snapshot snapshot() {
+    return this.db.getSnapshot();
+  }
+
+  public void release(final Snapshot snapshot) {
+    this.db.releaseSnapshot(snapshot);
+  }
+
+  @Override
   public RocksIterator createIterator(final IndexKind index) {
     final ColumnFamilyHandle cf = this.indexes[index.ordinal()];
     try (ReadOptions opts = new ReadOptions()) {
@@ -83,37 +113,57 @@ public class AbstractRocksTripleStore {
     }
   }
 
+  @Override
   public void insert(final byte[] s, final byte[] p, final byte[] o) {
 
-    for (final IndexKind i : IndexKind.values()) {
+    try (final WriteBatch wb = new WriteBatch()) {
 
-      final byte[] key = i.toKey(s, p, o);
-
-      try {
-        this.db.put(this.indexes[i.ordinal()], key, EMPTY);
+      for (final IndexKind i : IndexKind.values()) {
+        final byte[] key = i.toKey(s, p, o);
+        try {
+          wb.put(this.indexes[i.ordinal()], key, EMPTY);
+        }
+        catch (final RocksDBException e) {
+          throw new RuntimeException(e);
+        }
       }
-      catch (final RocksDBException e) {
-        throw new RuntimeException(e);
+
+      this.db.write(null, wb);
+
+    }
+    catch (final RocksDBException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void delete(final byte[] s, final byte[] p, final byte[] o) {
+    try (final WriteBatch wb = new WriteBatch()) {
+
+      for (final IndexKind i : IndexKind.values()) {
+
+        final byte[] key = i.toKey(s, p, o);
+
+        try {
+          wb.delete(this.indexes[i.ordinal()], key);
+        }
+        catch (final RocksDBException e) {
+          throw new RuntimeException(e);
+        }
+
       }
 
+      this.db.write(null, wb);
+
+    }
+    catch (final RocksDBException e) {
+      throw new RuntimeException(e);
     }
 
   }
 
-  public void delete(final byte[] s, final byte[] p, final byte[] o) {
-
-    for (final IndexKind i : IndexKind.values()) {
-
-      final byte[] key = i.toKey(s, p, o);
-
-      try {
-        this.db.delete(this.indexes[i.ordinal()], key);
-      }
-      catch (final RocksDBException e) {
-        throw new RuntimeException(e);
-      }
-
-    }
+  public long latestSequenceNumber() {
+    return this.db.getLatestSequenceNumber();
   }
 
 }

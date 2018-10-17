@@ -6,6 +6,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.ReadWrite;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.sparql.algebra.Algebra;
 import org.apache.jena.sparql.algebra.Op;
 import org.apache.jena.sparql.algebra.op.OpBGP;
@@ -97,8 +99,14 @@ public class RocksDatasetGraphTest {
   }
 
   private static Graph createGraph() {
+
     final JenaRocksStore store = new JenaRocksStore(Files.createTempDir().toPath());
     final JenaRocksGraph graph = new JenaRocksGraph(store);
+
+    final Model m = ModelFactory.createModelForGraph(graph);
+
+    m.begin();
+
     graph.add(new Triple(
         NodeFactory.createURI("theo"),
         NodeFactory.createURI("firstName"),
@@ -127,6 +135,9 @@ public class RocksDatasetGraphTest {
         NodeFactory.createURI("alice"),
         NodeFactory.createURI("firstName"),
         NodeFactory.createLiteral("Alice")));
+
+    m.commit();
+
     return graph;
   }
 

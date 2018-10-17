@@ -9,6 +9,8 @@ import java.util.Optional;
 
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.junit.Test;
 
@@ -25,12 +27,18 @@ public class RocksGraphTest {
 
     final JenaRocksGraph g = new JenaRocksGraph(store);
 
+    final Model m = ModelFactory.createModelForGraph(g);
+
+    m.begin();
+
+    m.add(m.createResource("theo"), m.createProperty("urn:firstName"), m.createLiteral("Theo"));
+
+    m.commit();
+
     final Triple t1 = new Triple(
         NodeFactory.createURI("theo"),
         NodeFactory.createURI("urn:firstName"),
         NodeFactory.createLiteral("Theo"));
-
-    g.add(t1);
 
     assertEquals(Optional.of(t1), g.find(t1).nextOptional());
 
