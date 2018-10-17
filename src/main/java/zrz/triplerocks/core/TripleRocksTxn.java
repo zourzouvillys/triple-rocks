@@ -83,7 +83,8 @@ public class TripleRocksTxn implements TripleRocksAPI {
 
   private WriteBatchInterface writeBatch() {
     if (this._wb == null) {
-      this._wb = new WriteBatchWithIndex();
+      // note: overwrite_key must be true to allow NewIteratorWithBase
+      this._wb = new WriteBatchWithIndex(true);
     }
     return this._wb;
   }
@@ -103,6 +104,9 @@ public class TripleRocksTxn implements TripleRocksAPI {
 
   @Override
   public void delete(final byte[] s, final byte[] p, final byte[] o) {
+    Preconditions.checkNotNull(s);
+    Preconditions.checkNotNull(p);
+    Preconditions.checkNotNull(o);
     for (final IndexKind i : IndexKind.values()) {
       final byte[] key = i.toKey(s, p, o);
       try {

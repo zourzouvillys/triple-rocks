@@ -31,20 +31,24 @@ class JenaRocksIterator extends NiceIterator<Triple> implements ExtendedIterator
   private boolean done;
 
   public JenaRocksIterator(final RocksIterator it, final byte[] key, final IndexKind idx) {
+
     this.it = it;
     this.pfx = key;
     this.idx = idx;
-    if ((key == null) || (key.length == 1)) {
+
+    if ((key == null) || (key.length == 0)) {
       it.seekToFirst();
     }
     else {
       it.seek(key);
     }
+
   }
 
   @Override
   public void close() {
     if (!this.done) {
+      this.done = true;
       this.it.close();
     }
   }

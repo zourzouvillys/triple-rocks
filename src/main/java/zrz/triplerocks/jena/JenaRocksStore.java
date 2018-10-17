@@ -58,17 +58,17 @@ public class JenaRocksStore extends AbstractRocksTripleStore {
     }
     else if (s != null) {
 
-      return this.query(IndexKind.SPO, s);
+      return this.query(IndexKind.SPO, MultiKey.create(s));
 
     }
     else if (p != null) {
 
-      return this.query(IndexKind.PSO, p);
+      return this.query(IndexKind.PSO, MultiKey.create(p));
 
     }
     else if (o != null) {
 
-      return this.query(IndexKind.OPS, o);
+      return this.query(IndexKind.OPS, MultiKey.create(o));
 
     }
     else {
@@ -78,7 +78,7 @@ public class JenaRocksStore extends AbstractRocksTripleStore {
     }
   }
 
-  public ExtendedIterator<Triple> query(final IndexKind index, final byte[] key) {
+  public JenaRocksIterator query(final IndexKind index, final byte[] key) {
     return new JenaRocksIterator(JenaRocksTransactionHandler.currentTxn(this).createIterator(index), key, index);
   }
 
