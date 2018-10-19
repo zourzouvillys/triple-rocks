@@ -29,7 +29,7 @@ artifacts { jar }
 dependencies {
 
   api                 'org.apache.jena:jena-core:3.9.0'
-
+  
   implementation      'org.rocksdb:rocksdbjni:5.15.10'  
   implementation      'com.google.guava:guava:26.0-jre'
       

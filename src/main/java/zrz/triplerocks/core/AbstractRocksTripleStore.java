@@ -16,6 +16,7 @@ import org.rocksdb.RocksIterator;
 import org.rocksdb.Snapshot;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteBatchWithIndex;
+import org.rocksdb.WriteOptions;
 
 public class AbstractRocksTripleStore implements TripleRocksAPI {
 
@@ -128,7 +129,9 @@ public class AbstractRocksTripleStore implements TripleRocksAPI {
         }
       }
 
-      this.db.write(null, wb);
+      try (WriteOptions wo = new WriteOptions()) {
+        this.db.write(wo, wb);
+      }
 
     }
     catch (final RocksDBException e) {
