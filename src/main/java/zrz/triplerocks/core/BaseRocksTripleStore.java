@@ -4,7 +4,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
+import org.rocksdb.Checkpoint;
 import org.rocksdb.ColumnFamilyDescriptor;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.ColumnFamilyOptions;
@@ -13,31 +15,60 @@ import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.rocksdb.RocksMemEnv;
 import org.rocksdb.Snapshot;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteBatchWithIndex;
 import org.rocksdb.WriteOptions;
 
-public class AbstractRocksTripleStore implements TripleRocksAPI {
+import zrz.rocksdb.JRocksEngine;
+
+public class BaseRocksTripleStore implements TripleRocksAPI {
 
   static final byte[] EMPTY = new byte[] {};
 
   RocksDB db;
   protected final ColumnFamilyHandle[] indexes = new ColumnFamilyHandle[IndexKind.values().length];
 
-  public AbstractRocksTripleStore(final Path path) {
+  private ColumnFamilyOptions cfo;
+  private List<ListenerContext> listeners = new ArrayList<>();
+
+  /**
+   * creates an in memory store.
+   */
+
+  public BaseRocksTripleStore() {
 
     try {
 
-      final ColumnFamilyDescriptor[] cfd = new ColumnFamilyDescriptor[1 + IndexKind.values().length];
+      this.cfo = new ColumnFamilyOptions();
+      final ColumnFamilyDescriptor[] cfd = JRocksEngine.indexDescriptors(cfo);
+      final List<ColumnFamilyHandle> cfh = new ArrayList<>();
 
-      cfd[0] = new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY);
-
-      for (final IndexKind kind : IndexKind.values()) {
-        final ColumnFamilyOptions cfo = new ColumnFamilyOptions();
-        cfd[1 + kind.ordinal()] = new ColumnFamilyDescriptor(kind.toString().getBytes(), cfo);
+      try (final DBOptions opts = new DBOptions()) {
+        opts.setCreateIfMissing(true);
+        opts.setCreateMissingColumnFamilies(true);
+        opts.setEnv(new RocksMemEnv());
+        this.db = RocksDB.open(opts, "/tmp/unused-triplerocks-memdb", Arrays.asList(cfd), cfh);
       }
 
+      for (final IndexKind kind : IndexKind.values()) {
+        this.indexes[kind.ordinal()] = cfh.get(kind.ordinal() + 1);
+      }
+
+    }
+    catch (final RocksDBException e) {
+      throw new RuntimeException(e);
+    }
+
+  }
+
+  public BaseRocksTripleStore(final Path path) {
+
+    try {
+
+      this.cfo = new ColumnFamilyOptions();
+      final ColumnFamilyDescriptor[] cfd = JRocksEngine.indexDescriptors(cfo);
       final List<ColumnFamilyHandle> cfh = new ArrayList<>();
 
       try (final DBOptions opts = new DBOptions()) {
@@ -54,6 +85,28 @@ public class AbstractRocksTripleStore implements TripleRocksAPI {
     catch (final RocksDBException e) {
       throw new RuntimeException(e);
     }
+
+  }
+
+  /**
+   * add a subscriber that will receive indications of store changes.
+   * 
+   * note that the changes will be delivered AFTER the batch has been written out, and will be made available in the
+   * same order as the commits happened.
+   * 
+   * each listener will be interrogated to ask for the most recent write it has received (which may be null). it will
+   * then receive all changes since that point if they are available. it not, the add will be given a chance to
+   * interrogate the store as a snapshot, and once done will receive new changes since the snapshot.
+   * 
+   * @param listener
+   * @param id
+   * 
+   */
+
+  public void addListener(StoreChangeListener listener, long id) {
+    ListenerContext lctx = new ListenerContext(this, listener);
+    lctx.start(id);
+    this.listeners.add(lctx);
   }
 
   /**
@@ -129,18 +182,14 @@ public class AbstractRocksTripleStore implements TripleRocksAPI {
         }
       }
 
-      try (WriteOptions wo = new WriteOptions()) {
-        this.db.write(wo, wb);
-      }
+      this.commit(wb, null);
 
-    }
-    catch (final RocksDBException e) {
-      throw new RuntimeException(e);
     }
   }
 
   @Override
   public void delete(final byte[] s, final byte[] p, final byte[] o) {
+
     try (final WriteBatch wb = new WriteBatch()) {
 
       for (final IndexKind i : IndexKind.values()) {
@@ -156,17 +205,96 @@ public class AbstractRocksTripleStore implements TripleRocksAPI {
 
       }
 
-      this.db.write(null, wb);
+      this.commit(wb, null);
 
-    }
-    catch (final RocksDBException e) {
-      throw new RuntimeException(e);
     }
 
   }
 
   public long latestSequenceNumber() {
     return this.db.getLatestSequenceNumber();
+  }
+
+  /**
+   * commit logic.
+   * 
+   * 
+   * 
+   * 
+   * @param wb
+   *          the batch to write. we take ownership and will release once completed.
+   * @param snapshot
+   *          the snapshot that was used for reads in this batch. we take ownership and will release once completed.
+   * 
+   */
+
+  void commit(WriteBatchWithIndex wb, Snapshot snapshot) {
+    try (WriteOptions opts = new WriteOptions()) {
+      this.db.write(opts, wb);
+      for (ListenerContext l : this.listeners) {
+        try {
+          l.accept(wb);
+        }
+        catch (Throwable t) {
+          // well fuck.
+          t.printStackTrace();
+        }
+      }
+    }
+    catch (final RocksDBException e) {
+      throw new RuntimeException(e);
+    }
+    finally {
+      wb.close();
+      if (snapshot != null) {
+        this.release(snapshot);
+        snapshot.close();
+      }
+    }
+  }
+
+  void commit(WriteBatch wb, Snapshot snapshot) {
+    try (WriteOptions opts = new WriteOptions()) {
+      this.db.write(opts, wb);
+      for (ListenerContext l : this.listeners) {
+        try {
+          l.notify(wb);
+        }
+        catch (Throwable t) {
+          // well fuck.
+          t.printStackTrace();
+        }
+      }
+    }
+    catch (final RocksDBException e) {
+      throw new RuntimeException(e);
+    }
+    finally {
+      wb.close();
+      if (snapshot != null) {
+        this.release(snapshot);
+        snapshot.close();
+      }
+    }
+  }
+
+  public RocksDB db() {
+    return this.db;
+  }
+
+  /**
+   * create a checkpoint of this database.
+   */
+
+  public Path checkpoint(Path parentFolder) {
+    try (Checkpoint cp = Checkpoint.create(db)) {
+      Path path = parentFolder.resolve(UUID.randomUUID().toString());
+      cp.createCheckpoint(path.toString());
+      return path;
+    }
+    catch (RocksDBException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }

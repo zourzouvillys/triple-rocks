@@ -1,6 +1,8 @@
 repositories {
   mavenCentral()
   jcenter()
+  			maven { url 'https://jitpack.io' }
+  
 }
 
 apply plugin: 'java-library'
@@ -29,9 +31,17 @@ artifacts { jar }
 
 dependencies {
 
-  api                 'org.apache.jena:jena-core:3.9.0'
+  api 'com.github.zourzouvillys:triplediff:master-SNAPSHOT'
+
+  implementation      'com.google.protobuf:protobuf-java:3.6.1'
   
-  implementation      'org.rocksdb:rocksdbjni:5.15.10'  
+  api                 'org.apache.jena:jena-core:3.9.0'
+  implementation      'org.apache.jena:jena-arq:3.9.0'
+  
+   implementation      'org.rocksdb:rocksdbjni:5.15.10'
+  
+  // implementation files('/Users/theo/git/rocksdb/java/target/rocksdbjni-5.17.0-osx.jar')
+    
   implementation      'com.google.guava:guava:26.0-jre'
       
   compileOnly         'org.eclipse.jdt:org.eclipse.jdt.annotation:2.1.150'

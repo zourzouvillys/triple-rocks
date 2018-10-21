@@ -8,11 +8,15 @@ import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.util.iterator.NullIterator;
 import org.apache.jena.util.iterator.SingletonIterator;
 
-import zrz.triplerocks.core.AbstractRocksTripleStore;
+import zrz.triplerocks.core.BaseRocksTripleStore;
 import zrz.triplerocks.core.IndexKind;
 import zrz.triplerocks.core.MultiKey;
 
-public class JenaRocksStore extends AbstractRocksTripleStore {
+public class JenaRocksStore extends BaseRocksTripleStore {
+
+  public JenaRocksStore() {
+    super();
+  }
 
   public JenaRocksStore(final Path path) {
     super(path);

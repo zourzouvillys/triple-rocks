@@ -1,5 +1,8 @@
 # RocksDB Triplestore
 
+[![](https://jitpack.io/v/zourzouvillys/triplerocks.svg)](https://jitpack.io/#zourzouvillys/triplerocks)
+
+
 a simple triplestore backed by RocksDB, with an adapter for Apache Jena.
 
 ```

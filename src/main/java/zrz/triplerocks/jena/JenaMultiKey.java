@@ -14,7 +14,7 @@ import com.google.common.primitives.Bytes;
 import zrz.triplerocks.core.IndexKind;
 import zrz.triplerocks.core.MultiKey;
 
-class JenaMultiKey {
+public class JenaMultiKey {
 
   private static final byte BN_TYPE = 1;
   private static final byte IRI_TYPE = 2;

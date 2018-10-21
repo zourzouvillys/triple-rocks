@@ -5,6 +5,7 @@ import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.Snapshot;
+import org.rocksdb.WriteBatch.Handler;
 import org.rocksdb.WriteBatchInterface;
 import org.rocksdb.WriteBatchWithIndex;
 import org.rocksdb.WriteOptions;
@@ -13,13 +14,13 @@ import com.google.common.base.Preconditions;
 
 public class TripleRocksTxn implements TripleRocksAPI {
 
-  private final AbstractRocksTripleStore store;
+  private final BaseRocksTripleStore store;
   private Snapshot snapshot;
 
   // use writeBatch() instead of accessing this directly.
   private WriteBatchWithIndex _wb;
 
-  private TripleRocksTxn(final AbstractRocksTripleStore store) {
+  private TripleRocksTxn(final BaseRocksTripleStore store) {
     this.store = store;
   }
 
@@ -42,12 +43,9 @@ public class TripleRocksTxn implements TripleRocksAPI {
   public void commit() {
     try {
       if (this._wb != null) {
-        try (WriteOptions opts = new WriteOptions()) {
-          this.store.db.write(opts, this._wb);
-        }
-        catch (final RocksDBException e) {
-          throw new RuntimeException(e);
-        }
+        this.store.commit(this._wb, this.snapshot);
+        this.snapshot = null;
+        this._wb = null;
       }
     }
     finally {
@@ -69,7 +67,7 @@ public class TripleRocksTxn implements TripleRocksAPI {
    * @return
    */
 
-  static TripleRocksTxn begin(final AbstractRocksTripleStore store) {
+  static TripleRocksTxn begin(final BaseRocksTripleStore store) {
     final TripleRocksTxn txn = new TripleRocksTxn(store);
     txn.begin();
     return txn;
@@ -94,13 +92,17 @@ public class TripleRocksTxn implements TripleRocksAPI {
     for (final IndexKind i : IndexKind.values()) {
       final byte[] key = i.toKey(s, p, o);
       try {
-        this.writeBatch().put(this.store.indexes[i.ordinal()], key, AbstractRocksTripleStore.EMPTY);
+        this.writeBatch().put(this.store.indexes[i.ordinal()], key, BaseRocksTripleStore.EMPTY);
       }
       catch (final RocksDBException e) {
         throw new RuntimeException(e);
       }
     }
   }
+
+  /**
+   * 
+   */
 
   @Override
   public void delete(final byte[] s, final byte[] p, final byte[] o) {
