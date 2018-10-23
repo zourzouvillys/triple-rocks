@@ -31,7 +31,7 @@ public class TripleRocksReplicationProduceTest {
     store.performAdd(NodeFactory.createURI("charlie"), NodeFactory.createURI("firstName"), NodeFactory.createLiteral("Charlie"));
 
     // add the listener.
-    TripleRocksReplicationProduce listener = new TripleRocksReplicationProduce(new MockPublisher());
+    TripleRocksReplicationProducer listener = new TripleRocksReplicationProducer(new MockPublisher());
     store.addListener(listener, id);
 
     store.performDelete(NodeFactory.createURI("charlie"), NodeFactory.createURI("firstName"), NodeFactory.createLiteral("Charlie"));

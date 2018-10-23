@@ -4,13 +4,14 @@ import static java.util.Objects.requireNonNull;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.rocksdb.Cache;
 import org.rocksdb.Checkpoint;
@@ -20,106 +21,76 @@ import org.rocksdb.ColumnFamilyOptions;
 import org.rocksdb.DBOptions;
 import org.rocksdb.Env;
 import org.rocksdb.FlushOptions;
-import org.rocksdb.LRUCache;
 import org.rocksdb.OptionsUtil;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
+import org.rocksdb.RocksIterator;
 import org.rocksdb.SstFileManager;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteBatchWithIndex;
 import org.rocksdb.WriteOptions;
-import org.rocksdb.util.SizeUnit;
 
 import zrz.triplerocks.core.IndexKind;
 
-public class JRocksEngine implements Closeable {
+public class JRocksEngine implements Closeable, JRocksBatchWriter, JRocksReadableWriter {
 
   static {
     RocksDB.loadLibrary();
   }
 
-  private final RocksDB db;
-  private final ColumnFamilyHandle defaultCF;
-  private final ColumnFamilyHandle[] indexes;
+  final RocksDB db;
   private DBOptions opts;
   private ColumnFamilyOptions cfo;
   private SstFileManager sst;
   private Cache cache;
+  private Map<String, JAttachedColumnFamily> cfs;
 
   private JRocksEngine(
       RocksDB db,
-      ColumnFamilyHandle defaultCF,
-      ColumnFamilyHandle[] indexes,
+      List<ColumnFamilyHandle> cfh,
       DBOptions opts,
-      ColumnFamilyOptions cfo,
-      SstFileManager sst,
-      Cache cache) {
+      ColumnFamilyOptions cfo) {
 
     this.db = db;
-    this.defaultCF = defaultCF;
-    this.indexes = indexes;
     this.opts = opts;
     this.cfo = cfo;
-    this.sst = sst;
-    this.cache = cache;
+
+    this.cfs = cfh.stream().collect(
+        Collectors.toMap(
+            h -> {
+              try {
+                return new String(h.getName(), StandardCharsets.UTF_8);
+              }
+              catch (RocksDBException e) {
+                throw new RuntimeException(e);
+              }
+            },
+            h -> new JAttachedColumnFamily(this, h)));
 
   }
 
-  @SuppressWarnings("resource")
-  public static JRocksEngine open(Path path) {
+  public JAttachedColumnFamily columnFamily(String cfname) {
+    return this.openColumnFamilyHandle(cfname);
+  }
 
-    try {
+  /**
+   * 
+   * @param cfname
+   * @return
+   */
 
-      DBOptions opts = new DBOptions();
-
-      final List<ColumnFamilyHandle> cfh = new ArrayList<>();
-      final SstFileManager sst = new SstFileManager(Env.getDefault());
-      final RocksDB db;
-      final ColumnFamilyOptions cfo = new ColumnFamilyOptions();
-
-      // cfo.setTableFormatConfig(new PlainTableConfig().setHashTableRatio(0));
-      Cache cache = new LRUCache(SizeUnit.MB * 32);
-
-      // long bufferSizeBytes = SizeUnit.MB * 16;
-      // WriteBufferManager wbm = new WriteBufferManager(bufferSizeBytes, cache);
-      // opts.setWriteBufferManager(wbm);
-
-      if (Files.exists(path)) {
-
-        List<ColumnFamilyDescriptor> cfds = new ArrayList<>();
-
-        OptionsUtil.loadLatestOptions(path.toString(), Env.getDefault(), opts, cfds);
-
-        opts.setSstFileManager(sst);
-
-        db = RocksDB.open(opts, path.toString(), cfds, cfh);
-
-      }
-      else {
-
-        final ColumnFamilyDescriptor[] cfd = indexDescriptors(cfo);
-
-        opts.setSstFileManager(sst);
-        opts.setCreateIfMissing(true);
-        opts.setCreateMissingColumnFamilies(true);
-
-        db = RocksDB.open(opts, path.toString(), Arrays.asList(cfd), cfh);
-
-      }
-
-      ColumnFamilyHandle[] indexes = new ColumnFamilyHandle[IndexKind.values().length];
-
-      for (final IndexKind kind : IndexKind.values()) {
-        indexes[kind.ordinal()] = cfh.get(kind.ordinal() + 1);
-      }
-
-      return new JRocksEngine(db, cfh.get(0), indexes, opts, cfo, sst, cache);
-
-    }
-    catch (final RocksDBException e) {
-      throw new RuntimeException(e);
-    }
-
+  private JAttachedColumnFamily openColumnFamilyHandle(String cfname) {
+    return this.cfs.computeIfAbsent(
+        cfname,
+        key -> {
+          ColumnFamilyDescriptor cfd = new ColumnFamilyDescriptor(key.getBytes(), cfo);
+          try {
+            return new JAttachedColumnFamily(this, this.db.createColumnFamily(cfd));
+          }
+          catch (RocksDBException e) {
+            throw new RuntimeException(e);
+          }
+        });
   }
 
   /**
@@ -130,31 +101,11 @@ public class JRocksEngine implements Closeable {
 
   }
 
-  /**
-   * 
-   * @param cfo
-   * @return
-   */
-
-  public static final ColumnFamilyDescriptor[] indexDescriptors(ColumnFamilyOptions cfo) {
-
-    final ColumnFamilyDescriptor[] cfd = new ColumnFamilyDescriptor[1 + IndexKind.values().length];
-
-    cfd[0] = new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, cfo);
-
-    for (final IndexKind kind : IndexKind.values()) {
-      cfd[1 + kind.ordinal()] = new ColumnFamilyDescriptor(kind.toString().getBytes(), cfo);
-    }
-
-    return cfd;
-
-  }
-
   public void add(WriteBatch... batches) {
     try {
       try (WriteOptions opts = new WriteOptions()) {
         opts.setSync(false);
-        opts.setDisableWAL(true);
+        opts.setDisableWAL(false);
         for (WriteBatch b : batches) {
           this.db.write(opts, requireNonNull(b));
         }
@@ -169,7 +120,7 @@ public class JRocksEngine implements Closeable {
     try {
       try (WriteOptions opts = new WriteOptions()) {
         opts.setSync(false);
-        opts.setDisableWAL(true);
+        opts.setDisableWAL(false);
         for (WriteBatchWithIndex b : batches) {
           this.db.write(opts, b);
         }
@@ -184,17 +135,9 @@ public class JRocksEngine implements Closeable {
    * compact all ranges for all CFs, including the default.
    */
 
-  public void compactRange() {
-
-    try {
-      db.compactRange(this.defaultCF);
-      for (ColumnFamilyHandle ifx : this.indexes) {
-        db.compactRange(ifx);
-      }
-    }
-    catch (RocksDBException e) {
-      // TODO Auto-generated catch block
-      throw new RuntimeException(e);
+  public void compactAllRanges() {
+    for (JAttachedColumnFamily ifx : this.cfs.values()) {
+      ifx.compactRange(this);
     }
   }
 
@@ -213,27 +156,6 @@ public class JRocksEngine implements Closeable {
         throw new RuntimeException(e);
       }
     }
-  }
-
-  /**
-   * return the column family for the specified index.
-   * 
-   * @param idx
-   * @return
-   */
-
-  public ColumnFamilyHandle index(IndexKind idx) {
-    return this.indexes[idx.ordinal()];
-  }
-
-  /**
-   * return the column family for the specified dataset.
-   * 
-   * @return
-   */
-
-  public ColumnFamilyHandle keysHandle() {
-    return this.defaultCF;
   }
 
   /**
@@ -270,12 +192,16 @@ public class JRocksEngine implements Closeable {
     // System.err.println(usage.get(MemoryUsageType.kTableReadersTotal));
     // System.err.println(usage.get(MemoryUsageType.kCacheTotal));
 
-    this.defaultCF.close();
-    Arrays.stream(this.indexes).forEach(ColumnFamilyHandle::close);
+    this.cfs.values().forEach(JAttachedColumnFamily::close);
     this.db.close();
     this.opts.close();
     this.cfo.close();
-    this.sst.close();
+    if (this.sst != null) {
+      this.sst.close();
+    }
+    if (this.cache != null) {
+      this.cache.close();
+    }
 
   }
 
@@ -290,6 +216,131 @@ public class JRocksEngine implements Closeable {
       return path;
     }
     catch (RocksDBException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public void accept(JRocksBatch batch) {
+    this.add(batch.batch);
+    batch.close();
+  }
+
+  public void accept(JRocksBatchWithIndex batch) {
+    this.add(batch.batch);
+    batch.close();
+  }
+
+  @SuppressWarnings("resource")
+  public static JRocksEngine createInMemory() {
+
+    try {
+
+      DBOptions opts = new DBOptions();
+
+      final List<ColumnFamilyHandle> cfh = new ArrayList<>();
+      final RocksDB db;
+      final ColumnFamilyOptions cfo = new ColumnFamilyOptions();
+
+      List<ColumnFamilyDescriptor> cfds = new ArrayList<>();
+
+      cfds.add(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, cfo));
+
+      opts.setCreateIfMissing(true);
+      opts.setCreateMissingColumnFamilies(true);
+
+      Path tmp = Files.createTempDirectory("jrocksdb-mem-");
+
+      db = RocksDB.open(opts, tmp.toString(), cfds, cfh);
+
+      return new JRocksEngine(db, cfh, opts, cfo);
+
+    }
+    catch (final RocksDBException | IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @SuppressWarnings("resource")
+  public static JRocksEngine open(Path path) {
+
+    try {
+
+      DBOptions opts = new DBOptions();
+
+      final List<ColumnFamilyHandle> cfh = new ArrayList<>();
+      final RocksDB db;
+      final ColumnFamilyOptions cfo = new ColumnFamilyOptions();
+
+      List<ColumnFamilyDescriptor> cfds = new ArrayList<>();
+
+      if (Files.exists(path)) {
+
+        OptionsUtil.loadLatestOptions(path.toString(), Env.getDefault(), opts, cfds);
+
+        db = RocksDB.open(opts, path.toString(), cfds, cfh);
+
+      }
+      else {
+
+        cfds.add(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, cfo));
+
+        opts.setCreateIfMissing(true);
+        opts.setCreateMissingColumnFamilies(true);
+
+        db = RocksDB.open(opts, path.toString(), cfds, cfh);
+
+      }
+
+      return new JRocksEngine(db, cfh, opts, cfo);
+
+    }
+    catch (final RocksDBException e) {
+      throw new RuntimeException(e);
+    }
+
+  }
+
+  //
+
+  @Override
+  public void put(JAttachedColumnFamily cf, byte[] key, byte[] value) {
+    try {
+      db.put(cf.h, key, value);
+    }
+    catch (RocksDBException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void delete(JAttachedColumnFamily cf, byte[] key) {
+    try {
+      db.delete(cf.h, key);
+    }
+    catch (IllegalArgumentException | RocksDBException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * 
+   */
+
+  @Override
+  public RocksIterator newIterator(JAttachedColumnFamily cf) {
+    return db.newIterator(cf.h);
+  }
+
+  /**
+   * 
+   */
+
+  @Override
+  public int get(JAttachedColumnFamily cf, byte[] key, byte[] value) {
+    try {
+      return db.get(cf.h, key, value);
+    }
+    catch (IllegalArgumentException | RocksDBException e) {
       throw new RuntimeException(e);
     }
   }

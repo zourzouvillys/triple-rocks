@@ -67,7 +67,7 @@ public class JenaMultiKey {
 
   }
 
-  private static Node toNode(final byte[] data, final int start, final int len) {
+  static Node toNode(final byte[] data, final int start, final int len) {
     switch (data[start]) {
       case BN_TYPE:
         return NodeFactory.createBlankNode(new String(data, start + 1, len - 1, UTF_8));
@@ -75,29 +75,31 @@ public class JenaMultiKey {
         return NodeFactory.createURI(new String(data, start + 1, len - 1, UTF_8));
       case VALUE_TYPE: {
         // find the null char, which is our datatype.
-
-        final int idx = findSeperator(data, start, len);
-
-        if (idx == -1) {
-          // untyped
-          return NodeFactory.createLiteral(new String(data, start + 1, len - 1, UTF_8));
-        }
-
-        final int valueStart = start + 1;
-        final int dataTypeStart = idx + 1;
-        final int end = start + len;
-
-        // the datatype ...
-        final String literalValue = new String(data, valueStart, dataTypeStart - valueStart - 1, UTF_8);
-        final String dataType = new String(data, dataTypeStart, end - dataTypeStart, UTF_8);
-
-        return NodeFactory.createLiteral(literalValue, NodeFactory.getType(dataType));
-
+        return readLiteral(data, start, len);
       }
       default:
         throw new UnsupportedOperationException("invalid type: " + Byte.toUnsignedInt(data[start]));
     }
 
+  }
+
+  static Node readLiteral(byte[] data, int start, int len) {
+    final int idx = findSeperator(data, start, len);
+
+    if (idx == -1) {
+      // untyped
+      return NodeFactory.createLiteral(new String(data, start + 1, len - 1, UTF_8));
+    }
+
+    final int valueStart = start + 1;
+    final int dataTypeStart = idx + 1;
+    final int end = start + len;
+
+    // the datatype ...
+    final String literalValue = new String(data, valueStart, dataTypeStart - valueStart - 1, UTF_8);
+    final String dataType = new String(data, dataTypeStart, end - dataTypeStart, UTF_8);
+
+    return NodeFactory.createLiteral(literalValue, NodeFactory.getType(dataType));
   }
 
   private static int findSeperator(final byte[] data, final int start, final int len) {

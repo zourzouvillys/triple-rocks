@@ -7,6 +7,9 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.util.iterator.NullIterator;
 import org.apache.jena.util.iterator.SingletonIterator;
+import org.rocksdb.HistogramData;
+import org.rocksdb.HistogramType;
+import org.rocksdb.RocksDBException;
 
 import zrz.triplerocks.core.BaseRocksTripleStore;
 import zrz.triplerocks.core.IndexKind;
@@ -115,6 +118,20 @@ public class JenaRocksStore extends BaseRocksTripleStore {
         .currentTxn(this)
         .delete(sk, pk, ok);
 
+  }
+
+  public HistogramData stats(HistogramType type) {
+    return this.stats.getHistogramData(type);
+  }
+
+  public String property(String property) {
+    try {
+      return this.db().getProperty(property);
+    }
+    catch (RocksDBException e) {
+      // TODO Auto-generated catch block
+      throw new RuntimeException (e);
+    }
   }
 
 }

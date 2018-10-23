@@ -20,13 +20,13 @@ import zrz.triplerocks.core.StoreChangeListener;
  *
  */
 
-public class TripleRocksReplicationProduce implements StoreChangeListener {
+public class TripleRocksReplicationProducer implements StoreChangeListener {
 
   Set<Triple> tombstones = new HashSet<>();
   Set<Triple> added = new HashSet<>();
   private DeltaPublisher publisher;
 
-  public TripleRocksReplicationProduce(DeltaPublisher publisher) {
+  public TripleRocksReplicationProducer(DeltaPublisher publisher) {
     this.publisher = publisher;
   }
 

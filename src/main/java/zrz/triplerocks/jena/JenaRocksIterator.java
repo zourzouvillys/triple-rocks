@@ -13,7 +13,7 @@ import zrz.triplerocks.core.IndexKind;
  * @author theo
  *
  */
-class JenaRocksIterator extends NiceIterator<Triple> implements ExtendedIterator<Triple> {
+public class JenaRocksIterator extends NiceIterator<Triple> implements ExtendedIterator<Triple> {
 
   // the underlying iterator
   private final RocksIterator it;

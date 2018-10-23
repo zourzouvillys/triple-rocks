@@ -17,6 +17,7 @@ import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 import org.rocksdb.RocksMemEnv;
 import org.rocksdb.Snapshot;
+import org.rocksdb.Statistics;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteBatchWithIndex;
 import org.rocksdb.WriteOptions;
@@ -33,6 +34,8 @@ public class BaseRocksTripleStore implements TripleRocksAPI {
   private ColumnFamilyOptions cfo;
   private List<ListenerContext> listeners = new ArrayList<>();
 
+  protected Statistics stats;
+
   /**
    * creates an in memory store.
    */
@@ -42,13 +45,14 @@ public class BaseRocksTripleStore implements TripleRocksAPI {
     try {
 
       this.cfo = new ColumnFamilyOptions();
-      final ColumnFamilyDescriptor[] cfd = JRocksEngine.indexDescriptors(cfo);
+      final ColumnFamilyDescriptor[] cfd = indexDescriptors(cfo);
       final List<ColumnFamilyHandle> cfh = new ArrayList<>();
 
       try (final DBOptions opts = new DBOptions()) {
         opts.setCreateIfMissing(true);
         opts.setCreateMissingColumnFamilies(true);
         opts.setEnv(new RocksMemEnv());
+        enableStats(opts);
         this.db = RocksDB.open(opts, "/tmp/unused-triplerocks-memdb", Arrays.asList(cfd), cfh);
       }
 
@@ -62,18 +66,41 @@ public class BaseRocksTripleStore implements TripleRocksAPI {
     }
 
   }
+  
+  /**
+   * 
+   * @param cfo
+   * @return
+   */
+
+  @Deprecated
+  public static final ColumnFamilyDescriptor[] indexDescriptors(ColumnFamilyOptions cfo) {
+
+    final ColumnFamilyDescriptor[] cfd = new ColumnFamilyDescriptor[1 + IndexKind.values().length];
+
+    cfd[0] = new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, cfo);
+
+    for (final IndexKind kind : IndexKind.values()) {
+      cfd[1 + kind.ordinal()] = new ColumnFamilyDescriptor(kind.toString().getBytes(), cfo);
+    }
+
+    return cfd;
+
+  }
+
 
   public BaseRocksTripleStore(final Path path) {
 
     try {
 
       this.cfo = new ColumnFamilyOptions();
-      final ColumnFamilyDescriptor[] cfd = JRocksEngine.indexDescriptors(cfo);
+      final ColumnFamilyDescriptor[] cfd = indexDescriptors(cfo);
       final List<ColumnFamilyHandle> cfh = new ArrayList<>();
 
       try (final DBOptions opts = new DBOptions()) {
         opts.setCreateIfMissing(true);
         opts.setCreateMissingColumnFamilies(true);
+        enableStats(opts);
         this.db = RocksDB.open(opts, path.toString(), Arrays.asList(cfd), cfh);
       }
 
@@ -86,6 +113,13 @@ public class BaseRocksTripleStore implements TripleRocksAPI {
       throw new RuntimeException(e);
     }
 
+  }
+
+  private void enableStats(DBOptions opts) {
+    opts.setStatsDumpPeriodSec(1);
+    opts.setDumpMallocStats(true);
+    this.stats = new Statistics();
+    opts.setStatistics(stats);
   }
 
   /**

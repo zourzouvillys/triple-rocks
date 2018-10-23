@@ -23,7 +23,7 @@ public class IndexedRockStoreTest {
   public void test() throws RocksDBException {
     final ColumnFamilyOptions cfo = new ColumnFamilyOptions();
 
-    final ColumnFamilyDescriptor[] cfd = JRocksEngine.indexDescriptors(cfo);
+    final ColumnFamilyDescriptor[] cfd = BaseRocksTripleStore.indexDescriptors(cfo);
     final List<ColumnFamilyHandle> cfh = new ArrayList<>();
 
     DBOptions opts = new DBOptions();
