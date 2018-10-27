@@ -30,7 +30,7 @@ artifacts { jar }
 
 dependencies {
 
-  api 'com.github.zourzouvillys:triplediff:master-SNAPSHOT'
+  api 'com.github.zourzouvillys:triplediff:d1cc76bb52'
   api 'org.apache.commons:commons-rdf-api:0.5.0'
   
 
@@ -40,9 +40,7 @@ dependencies {
   implementation      'org.apache.jena:jena-arq:3.9.0'
   
    implementation      'org.rocksdb:rocksdbjni:5.15.10'
-  
-  // implementation files('/Users/theo/git/rocksdb/java/target/rocksdbjni-5.17.0-osx.jar')
-    
+      
   implementation      'com.google.guava:guava:26.0-jre'
   compileOnly         'org.eclipse.jdt:org.eclipse.jdt.annotation:2.1.150'
   
