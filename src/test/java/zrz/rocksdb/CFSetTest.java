@@ -1,14 +1,16 @@
 package zrz.rocksdb;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.util.stream.Stream;
 
 import org.junit.Test;
 
+import triplediff.protobuf.TripleDiffProto.Term;
+import triplediff.protobuf.TripleDiffProto.Triple;
 import zrz.rocksdb.protobuf.ProtobufMessageMapper;
-import zrz.triplediff.protobuf.TripleDiffProto.Term;
-import zrz.triplediff.protobuf.TripleDiffProto.Triple;
 
 public class CFSetTest {
 

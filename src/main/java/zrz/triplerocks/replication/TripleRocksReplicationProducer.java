@@ -7,10 +7,10 @@ import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 
+import triplediff.protobuf.TripleDiffProto.Delta;
+import triplediff.protobuf.TripleDiffProto.Term;
 import zrz.triplediff.DeltaBuilder;
 import zrz.triplediff.DeltaTerms;
-import zrz.triplediff.protobuf.TripleDiffProto.Delta;
-import zrz.triplediff.protobuf.TripleDiffProto.Term;
 import zrz.triplerocks.core.StoreChangeListener;
 
 /**

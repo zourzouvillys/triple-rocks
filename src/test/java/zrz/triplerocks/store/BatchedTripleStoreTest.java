@@ -10,14 +10,13 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-import zrz.rocksdb.JRocksDirectSet;
+import triplediff.protobuf.TripleDiffProto.Term;
+import triplediff.protobuf.TripleDiffProto.Triple;
 import zrz.rocksdb.JRocksColumnFamily;
+import zrz.rocksdb.JRocksDirectSet;
 import zrz.rocksdb.JRocksEngine;
-import zrz.rocksdb.JRocksSet;
 import zrz.rocksdb.PrefixedColumnFamily;
 import zrz.rocksdb.protobuf.ProtobufMessageMapper;
-import zrz.triplediff.protobuf.TripleDiffProto.Term;
-import zrz.triplediff.protobuf.TripleDiffProto.Triple;
 
 public class BatchedTripleStoreTest {
 

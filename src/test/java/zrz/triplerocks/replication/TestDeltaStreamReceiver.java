@@ -2,13 +2,12 @@ package zrz.triplerocks.replication;
 
 import org.apache.jena.rdf.model.AnonId;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 
+import triplediff.protobuf.TripleDiffProto.Term;
 import zrz.triplediff.DeltaStream;
-import zrz.triplediff.protobuf.TripleDiffProto.Term;
 
 public class TestDeltaStreamReceiver implements DeltaStream {
 

@@ -8,7 +8,6 @@ import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 
 import zrz.rocksdb.JRocksMapper;
-import zrz.triplediff.protobuf.TripleDiffProto.Triple;
 
 /**
  * mapper which uses the protobuf infrastructure. useful for records, not so much for indexes.

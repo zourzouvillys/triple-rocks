@@ -1,7 +1,6 @@
 package zrz.triplerocks.replication;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,7 +10,7 @@ import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.NodeFactory;
 import org.junit.Test;
 
-import zrz.triplediff.protobuf.TripleDiffProto.Delta;
+import triplediff.protobuf.TripleDiffProto.Delta;
 import zrz.triplerocks.jena.JenaRocksStore;
 
 public class TripleRocksReplicationProduceTest {
