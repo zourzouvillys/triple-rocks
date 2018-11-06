@@ -161,7 +161,6 @@ public class BaseRocksTripleStore implements TripleRocksAPI {
   }
 
   @Override
-  @SuppressWarnings("resource")
   public boolean contains(final byte[] s, final byte[] p, final byte[] o) {
 
     final ColumnFamilyHandle cf = this.indexes[IndexKind.SPO.ordinal()];

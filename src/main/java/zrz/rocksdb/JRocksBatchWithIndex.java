@@ -25,8 +25,8 @@ public class JRocksBatchWithIndex implements JRocksReadableWriter {
   }
 
   /**
-   * return a new handle that binds the reader context to the backing engine, so newIterator() and get() will return
-   * entries from this but overlaying the db.
+   * return a new handle that binds the reader context to the backing engine, so newIterator() and
+   * get() will return entries from this but overlaying the db.
    * 
    * @param backing
    * @return

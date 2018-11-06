@@ -4,6 +4,14 @@ import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
 
+/**
+ * a batch which is attached to a specific engine. The other instances (JRocksBatchWriter and
+ * JRocksBatchWithIndex) both work without an underlying dataset.
+ * 
+ * @author theo
+ *
+ */
+
 public class JRocksBoundBatchWithIndex implements JRocksReadableWriter {
 
   private JRocksBatchWithIndex batch;
@@ -42,6 +50,11 @@ public class JRocksBoundBatchWithIndex implements JRocksReadableWriter {
   @Override
   public void delete(JAttachedColumnFamily cf, byte[] key) {
     batch.delete(cf, key);
+  }
+
+  public long allocateSerial(JRocksColumnFamily cf, String key) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented Method: JRocksWriter.allocateSerial invoked.");
   }
 
 }

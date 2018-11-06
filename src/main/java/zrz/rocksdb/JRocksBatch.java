@@ -15,7 +15,6 @@ public class JRocksBatch implements AutoCloseable, JRocksWriter {
     this.batch = batch;
   }
 
-
   @Override
   public void close() {
     if (this.batch == null)

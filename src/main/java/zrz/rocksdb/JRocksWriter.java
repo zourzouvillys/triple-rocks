@@ -6,5 +6,4 @@ public interface JRocksWriter {
 
   void delete(JAttachedColumnFamily h, byte[] key);
 
-
 }

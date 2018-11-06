@@ -26,10 +26,10 @@ public class BatchedTripleStoreTest {
     try (JRocksEngine db = JRocksEngine.createInMemory()) {
 
       JRocksColumnFamily acf = db.columnFamily("default");
-      
       PrefixedColumnFamily cf = new PrefixedColumnFamily(acf, "test/".getBytes());
 
-      BatchedTripleStore<Triple> batched = new BatchedTripleStore<>(
+      BatchedTripleStore<Triple> batched =
+        new BatchedTripleStore<>(
           db,
           new JRocksDirectSet<>(ProtobufMessageMapper.withParser(Triple.parser()), cf));
 

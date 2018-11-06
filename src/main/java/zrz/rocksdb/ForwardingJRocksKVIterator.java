@@ -1,10 +1,10 @@
 package zrz.rocksdb;
 
-public class ForwardingJRocksIterator<K, V> implements JRocksKeyValueIterator<K, V> {
+public class ForwardingJRocksKVIterator<K, V> implements JRocksKeyValueIterator<K, V> {
 
   private final JRocksKeyValueIterator<K, V> it;
 
-  public ForwardingJRocksIterator(JRocksKeyValueIterator<K, V> it) {
+  public ForwardingJRocksKVIterator(JRocksKeyValueIterator<K, V> it) {
     this.it = it;
   }
 

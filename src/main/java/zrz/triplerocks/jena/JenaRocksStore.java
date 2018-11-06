@@ -2,6 +2,7 @@ package zrz.triplerocks.jena;
 
 import java.nio.file.Path;
 
+import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.util.iterator.ExtendedIterator;
@@ -14,6 +15,7 @@ import org.rocksdb.RocksDBException;
 import zrz.triplerocks.core.BaseRocksTripleStore;
 import zrz.triplerocks.core.IndexKind;
 import zrz.triplerocks.core.MultiKey;
+import zrz.triplerocks.core.TripleRocksAPI;
 
 public class JenaRocksStore extends BaseRocksTripleStore {
 
@@ -25,11 +27,19 @@ public class JenaRocksStore extends BaseRocksTripleStore {
     super(path);
   }
 
+  public ExtendedIterator<Triple> all(TripleRocksAPI api) {
+    return new JenaRocksIterator(api.createIterator(IndexKind.SPO), null, IndexKind.SPO);
+  }
+
   public ExtendedIterator<Triple> all() {
-    return new JenaRocksIterator(this.createIterator(IndexKind.SPO), null, IndexKind.SPO);
+    return all(JenaRocksTransactionHandler.currentTxn(this));
   }
 
   public ExtendedIterator<Triple> query(final Node sn, final Node pn, final Node on) {
+    return query(JenaRocksTransactionHandler.currentTxn(this), sn, pn, on);
+  }
+
+  public ExtendedIterator<Triple> query(TripleRocksAPI api, Node sn, final Node pn, final Node on) {
 
     final byte[] s = toKey(sn);
     final byte[] p = toKey(pn);
@@ -38,7 +48,7 @@ public class JenaRocksStore extends BaseRocksTripleStore {
     if ((s != null) && (p != null) && (o != null)) {
 
       // best case, direct single hit.
-      if (JenaRocksTransactionHandler.currentTxn(this).contains(s, p, o)) {
+      if (api.contains(s, p, o)) {
         return new SingletonIterator<>(new Triple(sn, pn, on));
       }
 
@@ -48,75 +58,86 @@ public class JenaRocksStore extends BaseRocksTripleStore {
     else if ((s != null) && (p != null)) {
 
       final byte[] key = MultiKey.create(s, p);
-      return this.query(IndexKind.SPO, key);
+      return this.query(api, IndexKind.SPO, key);
 
     }
     else if ((s != null) && (o != null)) {
 
       final byte[] key = MultiKey.create(s, o);
-      return this.query(IndexKind.SOP, key);
+      return this.query(api, IndexKind.SOP, key);
 
     }
     else if ((p != null) && (o != null)) {
 
       final byte[] key = MultiKey.create(p, o);
-      return this.query(IndexKind.POS, key);
+      return this.query(api, IndexKind.POS, key);
 
     }
     else if (s != null) {
 
-      return this.query(IndexKind.SPO, MultiKey.create(s));
+      return this.query(api, IndexKind.SPO, MultiKey.create(s));
 
     }
     else if (p != null) {
 
-      return this.query(IndexKind.PSO, MultiKey.create(p));
+      return this.query(api, IndexKind.PSO, MultiKey.create(p));
 
     }
     else if (o != null) {
 
-      return this.query(IndexKind.OPS, MultiKey.create(o));
+      return this.query(api, IndexKind.OPS, MultiKey.create(o));
 
     }
     else {
 
-      return this.all();
+      return this.all(api);
 
     }
   }
 
+  public JenaRocksIterator query(TripleRocksAPI api, final IndexKind index, final byte[] key) {
+    if (api == null) {
+      return query(JenaRocksTransactionHandler.currentTxn(this), index, key);
+    }
+    return new JenaRocksIterator(api.createIterator(index), key, index);
+  }
+
   public JenaRocksIterator query(final IndexKind index, final byte[] key) {
-    return new JenaRocksIterator(JenaRocksTransactionHandler.currentTxn(this).createIterator(index), key, index);
+    return query(JenaRocksTransactionHandler.currentTxn(this), index, key);
   }
 
   private static byte[] toKey(final Node n) {
-    if (n == null) {
+    if ((n == null) || (n == Node.ANY)) {
       return null;
     }
     return JenaMultiKey.toKey(n);
   }
 
   public void performAdd(final Node s, final Node p, final Node o) {
+    performAdd(JenaRocksTransactionHandler.currentTxn(this), s, p, o);
+  }
+
+  public void performAdd(TripleRocksAPI api, final Node s, final Node p, final Node o) {
 
     final byte[] sk = toKey(s);
     final byte[] pk = toKey(p);
     final byte[] ok = toKey(o);
 
-    JenaRocksTransactionHandler
-        .currentTxn(this)
-        .insert(sk, pk, ok);
+    api.insert(sk, pk, ok);
 
   }
 
   public final void performDelete(final Node s, final Node p, final Node o) {
+    performDelete(JenaRocksTransactionHandler.currentTxn(this), s, p, o);
+  }
+
+  public final void performDelete(TripleRocksAPI api, final Node s, final Node p, final Node o) {
 
     final byte[] sk = toKey(s);
     final byte[] pk = toKey(p);
     final byte[] ok = toKey(o);
 
-    JenaRocksTransactionHandler
-        .currentTxn(this)
-        .delete(sk, pk, ok);
+    api.delete(sk, pk, ok);
 
   }
 
@@ -130,8 +151,20 @@ public class JenaRocksStore extends BaseRocksTripleStore {
     }
     catch (RocksDBException e) {
       // TODO Auto-generated catch block
-      throw new RuntimeException (e);
+      throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * add a named graph to the store.
+   * 
+   * @param iri
+   * @param content
+   */
+
+  public void addGraph(String iri, Graph content) {
+    // TODO Auto-generated method stub
+    throw new UnsupportedOperationException("Unimplemented Method: JenaRocksStore.addGraph invoked.");
   }
 
 }

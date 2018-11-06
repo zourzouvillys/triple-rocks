@@ -1,9 +1,10 @@
 package zrz.rocksdb;
 
+import java.util.Arrays;
+
+import org.apache.jena.ext.com.google.common.base.Verify;
 import org.rocksdb.ColumnFamilyHandle;
 import org.rocksdb.RocksDBException;
-import org.rocksdb.RocksIterator;
-import org.rocksdb.WriteBatch;
 
 /**
  * a column family which is attached to the {@link JRocksEngine} instance.
@@ -15,10 +16,18 @@ public class JAttachedColumnFamily implements JRocksColumnFamily {
 
   ColumnFamilyHandle h;
   private JRocksEngine engine;
+  private byte[] name;
 
   public JAttachedColumnFamily(JRocksEngine engine, ColumnFamilyHandle h) {
     this.engine = engine;
     this.h = h;
+    try {
+      byte[] name = h.getName();
+      this.name = Arrays.copyOf(name, name.length);
+    }
+    catch (RocksDBException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public void compactRange(JRocksEngine engine) {
@@ -46,7 +55,13 @@ public class JAttachedColumnFamily implements JRocksColumnFamily {
 
   @Override
   public JRocksKeyValueIterator<byte[], byte[]> newIterator(JRocksReadableWriter ctx) {
-    return new RocksIteratorAdapter(ctx.newIterator(this));
+    return new RocksIteratorAdapter(Verify.verifyNotNull(ctx, "ctx").newIterator(this));
+  }
+
+  @Override
+  public JRocksKeyValueIterator<byte[], byte[]> newIterator(JRocksReadableWriter ctx, byte[] prefix) {
+    // TODO: add. (currently only used for preficx, but suspect useful some time).
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -57,6 +72,10 @@ public class JAttachedColumnFamily implements JRocksColumnFamily {
   @Override
   public void put(JRocksWriter ctx, byte[] key, byte[] value) {
     ctx.put(this, key, value);
+  }
+
+  public String toString() {
+    return "CF[" + new String(this.name) + "]";
   }
 
 }

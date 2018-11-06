@@ -1,5 +1,6 @@
 package zrz.rocksdb;
 
+import org.apache.jena.ext.com.google.common.base.Verify;
 import org.rocksdb.RocksIterator;
 
 public class JRocksDirectSet<T> implements JRocksSet<T> {
@@ -22,6 +23,7 @@ public class JRocksDirectSet<T> implements JRocksSet<T> {
 
   @Override
   public void put(JRocksWriter ctx, T key) {
+    Verify.verifyNotNull(key, "key");
     cf.put(ctx, mapper.toByteArray(key), EMPTY_BYTES);
 
   }
@@ -33,6 +35,8 @@ public class JRocksDirectSet<T> implements JRocksSet<T> {
 
   @Override
   public JRocksIterator<T> createIterator(JRocksReadableWriter ctx) {
+
+    Verify.verifyNotNull(ctx, "ctx");
 
     return new JRocksIterator<T>() {
 
@@ -72,6 +76,10 @@ public class JRocksDirectSet<T> implements JRocksSet<T> {
 
     };
 
+  }
+
+  public JRocksColumnFamily columnFamily() {
+    return this.cf;
   }
 
 }

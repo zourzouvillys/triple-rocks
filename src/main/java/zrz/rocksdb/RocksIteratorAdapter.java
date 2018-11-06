@@ -5,9 +5,15 @@ import org.rocksdb.RocksIterator;
 public class RocksIteratorAdapter implements JRocksKeyValueIterator<byte[], byte[]> {
 
   private RocksIterator it;
+  private byte[] prefix;
 
   public RocksIteratorAdapter(RocksIterator it) {
+    this(it, null);
+  }
+
+  public RocksIteratorAdapter(RocksIterator it, byte[] prefix) {
     this.it = it;
+    this.prefix = prefix;
   }
 
   @Override

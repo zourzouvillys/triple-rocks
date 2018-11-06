@@ -8,11 +8,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.apache.jena.ext.com.google.common.collect.Sets;
 import org.rocksdb.Cache;
 import org.rocksdb.Checkpoint;
 import org.rocksdb.ColumnFamilyDescriptor;
@@ -30,8 +32,6 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteBatchWithIndex;
 import org.rocksdb.WriteOptions;
 
-import zrz.triplerocks.core.IndexKind;
-
 public class JRocksEngine implements Closeable, JRocksBatchWriter, JRocksReadableWriter {
 
   static {
@@ -44,19 +44,24 @@ public class JRocksEngine implements Closeable, JRocksBatchWriter, JRocksReadabl
   private SstFileManager sst;
   private Cache cache;
   private Map<String, JAttachedColumnFamily> cfs;
+  private EnumSet<JRocksOpenOption> openopts;
 
   private JRocksEngine(
       RocksDB db,
       List<ColumnFamilyHandle> cfh,
       DBOptions opts,
-      ColumnFamilyOptions cfo) {
+      ColumnFamilyOptions cfo,
+      EnumSet<JRocksOpenOption> openopts) {
 
     this.db = db;
     this.opts = opts;
     this.cfo = cfo;
+    this.openopts = openopts;
 
-    this.cfs = cfh.stream().collect(
-        Collectors.toMap(
+    this.cfs =
+      cfh.stream()
+        .collect(
+          Collectors.toMap(
             h -> {
               try {
                 return new String(h.getName(), StandardCharsets.UTF_8);
@@ -81,16 +86,16 @@ public class JRocksEngine implements Closeable, JRocksBatchWriter, JRocksReadabl
 
   private JAttachedColumnFamily openColumnFamilyHandle(String cfname) {
     return this.cfs.computeIfAbsent(
-        cfname,
-        key -> {
-          ColumnFamilyDescriptor cfd = new ColumnFamilyDescriptor(key.getBytes(), cfo);
-          try {
-            return new JAttachedColumnFamily(this, this.db.createColumnFamily(cfd));
-          }
-          catch (RocksDBException e) {
-            throw new RuntimeException(e);
-          }
-        });
+      cfname,
+      key -> {
+        ColumnFamilyDescriptor cfd = new ColumnFamilyDescriptor(key.getBytes(), cfo);
+        try {
+          return new JAttachedColumnFamily(this, this.db.createColumnFamily(cfd));
+        }
+        catch (RocksDBException e) {
+          throw new RuntimeException(e);
+        }
+      });
   }
 
   /**
@@ -252,7 +257,7 @@ public class JRocksEngine implements Closeable, JRocksBatchWriter, JRocksReadabl
 
       db = RocksDB.open(opts, tmp.toString(), cfds, cfh);
 
-      return new JRocksEngine(db, cfh, opts, cfo);
+      return new JRocksEngine(db, cfh, opts, cfo, EnumSet.noneOf(JRocksOpenOption.class));
 
     }
     catch (final RocksDBException | IOException e) {
@@ -260,8 +265,11 @@ public class JRocksEngine implements Closeable, JRocksBatchWriter, JRocksReadabl
     }
   }
 
-  @SuppressWarnings("resource")
-  public static JRocksEngine open(Path path) {
+  public static JRocksEngine open(Path path, JRocksOpenOption... options) {
+
+    EnumSet<JRocksOpenOption> openopts =
+      options.length == 0 ? EnumSet.noneOf(JRocksOpenOption.class)
+                          : EnumSet.copyOf(Sets.newHashSet(options));
 
     try {
 
@@ -273,25 +281,26 @@ public class JRocksEngine implements Closeable, JRocksBatchWriter, JRocksReadabl
 
       List<ColumnFamilyDescriptor> cfds = new ArrayList<>();
 
-      if (Files.exists(path)) {
+      if (openopts.contains(JRocksOpenOption.CREATE)) {
+        opts.setCreateIfMissing(true);
+      }
 
+      if (openopts.contains(JRocksOpenOption.CREATE_NEW)) {
+        opts.setErrorIfExists(true);
+      }
+
+      opts.setCreateMissingColumnFamilies(true);
+
+      if (Files.exists(path.resolve("CURRENT"))) {
         OptionsUtil.loadLatestOptions(path.toString(), Env.getDefault(), opts, cfds);
-
-        db = RocksDB.open(opts, path.toString(), cfds, cfh);
-
       }
       else {
-
         cfds.add(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, cfo));
-
-        opts.setCreateIfMissing(true);
-        opts.setCreateMissingColumnFamilies(true);
-
-        db = RocksDB.open(opts, path.toString(), cfds, cfh);
-
       }
 
-      return new JRocksEngine(db, cfh, opts, cfo);
+      db = RocksDB.open(opts, path.toString(), cfds, cfh);
+
+      return new JRocksEngine(db, cfh, opts, cfo, openopts);
 
     }
     catch (final RocksDBException e) {
