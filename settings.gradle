@@ -1,1 +1,1 @@
-// includeBuild '/Users/theo/git/triplediff'
+enableFeaturePreview('STABLE_PUBLISHING')

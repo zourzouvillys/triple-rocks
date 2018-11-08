@@ -8,6 +8,7 @@ import java.nio.file.Path;
 
 import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.NodeFactory;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import triplediff.protobuf.TripleDiffProto.Delta;
@@ -15,6 +16,7 @@ import zrz.triplerocks.jena.JenaRocksStore;
 
 public class TripleRocksReplicationProduceTest {
 
+  @Ignore
   @Test
   public void test() throws IOException {
 
@@ -31,11 +33,12 @@ public class TripleRocksReplicationProduceTest {
 
     // add the listener.
     TripleRocksReplicationProducer listener = new TripleRocksReplicationProducer(new MockPublisher());
+
     store.addListener(listener, id);
 
     store.performDelete(NodeFactory.createURI("charlie"), NodeFactory.createURI("firstName"), NodeFactory.createLiteral("Charlie"));
     store.performAdd(NodeFactory.createURI("charlie"), NodeFactory.createURI("firstName"), NodeFactory.createLiteral("Charlie"));
-
+    
     Delta delta = listener.createDelta();
 
     assertEquals(3, delta.getDiffsCount());

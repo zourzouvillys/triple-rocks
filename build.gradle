@@ -7,10 +7,14 @@ repositories {
 apply plugin: 'java-library'
 apply plugin: 'eclipse'
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
 group = 'com.github.zourzouvillys'
-version = 'master-SNAPSHOT'
-  
+
+version = "${version}" != "unspecified"
+  ? "${version}"
+  : 'master-SNAPSHOT';
+    
 sourceCompatibility = 8
 targetCompatibility = 8
 
@@ -111,6 +115,46 @@ install {
       }
     }
   }
+}
+
+  publishing {
+    publications {
+      "$project.name"(MavenPublication) {
+        groupId project.group
+        artifactId project.name
+        version project.version
+        from components.java
+        artifact sourcesJar
+      }
+    }
+    repositories {
+      maven {
+        url = "$rootProject.buildDir/repo"
+      }
+    }
+  }
+
+test {
+
+  // show standard out and standard error of the test JVM(s) on the console
+  // testLogging.showStandardStreams = true
+
+  // set heap size for the test JVM(s)
+  minHeapSize = "128m"
+  maxHeapSize = "256m"
+
+  // listen to events in the test execution lifecycle
+  beforeTest { descriptor ->
+     logger.lifecycle("Running test: " + descriptor)
+  }
+
+  //onOutput { descriptor, event ->
+  //   logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
+  //}
+  
+  forkEvery = 1
+  maxParallelForks = 4
+  
 }
 
 wrapper {
