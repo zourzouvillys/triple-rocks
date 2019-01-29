@@ -38,6 +38,10 @@ public class JAttachedColumnFamily implements JRocksColumnFamily {
       throw new RuntimeException(e);
     }
   }
+  
+  public ColumnFamilyHandle handle() {
+    return this.h;
+  }
 
   public void close() {
     h.close();

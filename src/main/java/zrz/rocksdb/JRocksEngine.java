@@ -73,6 +73,10 @@ public class JRocksEngine implements Closeable, JRocksBatchWriter, JRocksReadabl
             h -> new JAttachedColumnFamily(this, h)));
 
   }
+  
+  public RocksDB handle() {
+    return this.db;
+  }
 
   public JAttachedColumnFamily columnFamily(String cfname) {
     return this.openColumnFamilyHandle(cfname);
@@ -96,6 +100,15 @@ public class JRocksEngine implements Closeable, JRocksBatchWriter, JRocksReadabl
           throw new RuntimeException(e);
         }
       });
+  }
+
+  /**
+   * create a handle which can be used for consistent reads. the returned snapshot must be closed or
+   * will leak.
+   */
+
+  public JRocksSnapshot createSnapshot() {
+    return new JRocksSnapshot(db);
   }
 
   /**
