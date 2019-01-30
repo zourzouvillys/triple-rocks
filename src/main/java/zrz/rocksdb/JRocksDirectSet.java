@@ -37,7 +37,7 @@ public class JRocksDirectSet<T> implements JRocksSet<T> {
   public JRocksIterator<T> createIterator(JRocksReadableWriter ctx) {
 
     Verify.verifyNotNull(ctx, "ctx");
-
+    
     return new JRocksIterator<T>() {
 
       JRocksKeyValueIterator<byte[], byte[]> it = cf.newIterator(ctx);

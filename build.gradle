@@ -41,9 +41,9 @@ dependencies {
   implementation      'com.google.protobuf:protobuf-java:3.6.1'
   
   api                 'org.apache.jena:jena-core:3.9.0'
-  implementation      'org.apache.jena:jena-arq:3.9.0'
+  api                 'org.apache.jena:jena-arq:3.9.0'
   
-   implementation      'org.rocksdb:rocksdbjni:5.15.10'
+  api                 'org.rocksdb:rocksdbjni:5.17.2'
       
   implementation      'com.google.guava:guava:26.0-jre'
   compileOnly         'org.eclipse.jdt:org.eclipse.jdt.annotation:2.1.150'

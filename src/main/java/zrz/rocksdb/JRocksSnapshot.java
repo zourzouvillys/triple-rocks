@@ -51,6 +51,12 @@ public class JRocksSnapshot implements AutoCloseable, JRocksReader {
   }
 
   @Override
+  public RocksIterator newIterator(JAttachedColumnFamily cf, ReadOptions opts) {
+    opts.setSnapshot(snapshot());
+    return db.newIterator(cf.h, opts);
+  }
+
+  @Override
   public int get(JAttachedColumnFamily cf, byte[] key, byte[] value) {
     try {
       return this.db.get(cf.h, this.readOptions(), key, value);
@@ -62,10 +68,14 @@ public class JRocksSnapshot implements AutoCloseable, JRocksReader {
 
   @Override
   public void close() {
-    this.db.releaseSnapshot(this.snapshot);
-    this.snapshot = null;
-    this.ro.close();
-    this.ro = null;
+    if (this.snapshot != null) {
+      this.db.releaseSnapshot(this.snapshot);
+      this.snapshot = null;
+      if (this.ro != null) {
+        this.ro.close();
+        this.ro = null;
+      }
+    }
   }
 
 }
