@@ -73,7 +73,7 @@ public class JRocksEngine implements Closeable, JRocksBatchWriter, JRocksReadabl
             h -> new JAttachedColumnFamily(this, h)));
 
   }
-  
+
   public RocksDB handle() {
     return this.db;
   }
@@ -294,21 +294,34 @@ public class JRocksEngine implements Closeable, JRocksBatchWriter, JRocksReadabl
 
       List<ColumnFamilyDescriptor> cfds = new ArrayList<>();
 
-      if (openopts.contains(JRocksOpenOption.CREATE)) {
-        opts.setCreateIfMissing(true);
-      }
-
-      if (openopts.contains(JRocksOpenOption.CREATE_NEW)) {
-        opts.setErrorIfExists(true);
-      }
-
       opts.setCreateMissingColumnFamilies(true);
 
-      if (Files.exists(path.resolve("CURRENT"))) {
+      if (!openopts.contains(JRocksOpenOption.CREATE_NEW) && Files.exists(path.resolve("CURRENT"))) {
+
         OptionsUtil.loadLatestOptions(path.toString(), Env.getDefault(), opts, cfds);
+
+        opts.setErrorIfExists(false);
+        opts.setCreateIfMissing(false);
+
       }
       else {
+
+        if (openopts.contains(JRocksOpenOption.CREATE)) {
+          opts.setCreateIfMissing(true);
+        }
+        else {
+          opts.setCreateIfMissing(false);
+        }
+
+        if (openopts.contains(JRocksOpenOption.CREATE_NEW)) {
+          opts.setErrorIfExists(true);
+        }
+        else {
+          opts.setErrorIfExists(false);
+        }
+
         cfds.add(new ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, cfo));
+
       }
 
       db = RocksDB.open(opts, path.toString(), cfds, cfh);

@@ -8,6 +8,8 @@ import org.rocksdb.Snapshot;
 
 public class JRocksSnapshot implements AutoCloseable, JRocksReader {
 
+  private static final byte[] EMPTY_BYTES = new byte[0];
+
   private final RocksDB db;
 
   private Snapshot snapshot;
@@ -60,6 +62,15 @@ public class JRocksSnapshot implements AutoCloseable, JRocksReader {
   public int get(JAttachedColumnFamily cf, byte[] key, byte[] value) {
     try {
       return this.db.get(cf.h, this.readOptions(), key, value);
+    }
+    catch (RocksDBException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public boolean exists(JAttachedColumnFamily cf, byte[] key) {
+    try {
+      return this.db.get(cf.h, this.readOptions(), key, EMPTY_BYTES) != RocksDB.NOT_FOUND;
     }
     catch (RocksDBException e) {
       throw new RuntimeException(e);
