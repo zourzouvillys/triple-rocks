@@ -1,7 +1,7 @@
 package zrz.triplerocks.jena.quadstore;
 
-import zrz.rocksdb.JRocksColumnFamily;
-import zrz.rocksdb.PrefixedColumnFamily;
+import zrz.jrocks.JRocksColumnFamily;
+import zrz.jrocks.PrefixedColumnFamily;
 
 public class JenaTableMapper {
 

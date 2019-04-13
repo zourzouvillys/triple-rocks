@@ -7,7 +7,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 
-import zrz.rocksdb.JRocksMapper;
+import zrz.jrocks.JRocksMapper;
 
 /**
  * mapper which uses the protobuf infrastructure. useful for records, not so much for indexes.

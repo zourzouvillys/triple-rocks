@@ -2,10 +2,10 @@ package zrz.triplerocks.store;
 
 import java.util.stream.Stream;
 
-import zrz.rocksdb.JRocksBatchWithIndex;
-import zrz.rocksdb.JRocksBatchWriter;
-import zrz.rocksdb.JRocksEngine;
-import zrz.rocksdb.JRocksSet;
+import zrz.jrocks.JRocksBatchWithIndex;
+import zrz.jrocks.JRocksBatchWriter;
+import zrz.jrocks.JRocksEngine;
+import zrz.jrocks.JRocksSet;
 
 /**
  * a triple store which provides atomic change semantics but enforces consistency with reasonable performance by only

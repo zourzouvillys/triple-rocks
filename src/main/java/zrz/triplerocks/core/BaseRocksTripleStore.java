@@ -22,7 +22,7 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteBatchWithIndex;
 import org.rocksdb.WriteOptions;
 
-import zrz.rocksdb.JRocksEngine;
+import zrz.jrocks.JRocksEngine;
 
 public class BaseRocksTripleStore implements TripleRocksAPI {
 

@@ -8,10 +8,10 @@ import java.util.Iterator;
 
 import org.apache.jena.graph.Triple;
 
-import zrz.rocksdb.JRocksColumnFamily;
-import zrz.rocksdb.JRocksReadableWriter;
-import zrz.rocksdb.JRocksWriter;
-import zrz.rocksdb.PrefixedColumnFamily;
+import zrz.jrocks.JRocksColumnFamily;
+import zrz.jrocks.JRocksReadableWriter;
+import zrz.jrocks.JRocksWriter;
+import zrz.jrocks.PrefixedColumnFamily;
 import zrz.triplerocks.jena.JenaNodeMapper;
 
 /**

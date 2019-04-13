@@ -9,7 +9,7 @@ import org.apache.jena.graph.impl.TransactionHandlerBase;
 import org.apache.jena.util.iterator.ExtendedIterator;
 import org.apache.jena.util.iterator.WrappedIterator;
 
-import zrz.rocksdb.PrefixedColumnFamily;
+import zrz.jrocks.PrefixedColumnFamily;
 import zrz.triplerocks.jena.JenaNodeMapper;
 
 public class JenaQuadGraphView extends GraphBase implements Graph {

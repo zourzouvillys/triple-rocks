@@ -2,10 +2,10 @@ package zrz.triplerocks.store;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import zrz.rocksdb.JRocksColumnFamily;
-import zrz.rocksdb.JRocksBatchWriter;
-import zrz.rocksdb.JRocksEngine;
-import zrz.rocksdb.JRocksSet;
+import zrz.jrocks.JRocksBatchWriter;
+import zrz.jrocks.JRocksColumnFamily;
+import zrz.jrocks.JRocksEngine;
+import zrz.jrocks.JRocksSet;
 
 /**
  * a concurrent statement store which provides atomic change semantics but enforces consistency with reasonable

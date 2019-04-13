@@ -9,7 +9,7 @@ import org.apache.jena.graph.Triple;
 import org.apache.jena.sparql.graph.GraphFactory;
 import org.junit.Test;
 
-import zrz.rocksdb.JRocksEngine;
+import zrz.jrocks.JRocksEngine;
 
 public class JenaQuadStoreTest {
 

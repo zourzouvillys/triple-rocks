@@ -1,2 +1,10 @@
 enableFeaturePreview('STABLE_PUBLISHING')
 rootProject.name = 'triplerocks'
+
+
+
+includeBuild('../jrocks') {
+    dependencySubstitution {
+        substitute module('com.github.zourzouvillys:jrocks') with project(':')
+    }
+}

@@ -9,7 +9,7 @@ import org.apache.jena.sparql.core.Quad;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 
-import zrz.rocksdb.JRocksMapper;
+import zrz.jrocks.JRocksMapper;
 
 /**
  * maps Quad instances to on-disk bytes.

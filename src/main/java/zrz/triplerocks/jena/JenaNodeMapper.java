@@ -14,7 +14,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 
 import triplediff.protobuf.TripleDiffProto.Literal;
-import zrz.rocksdb.JRocksMapper;
+import zrz.jrocks.JRocksMapper;
 
 public class JenaNodeMapper implements JRocksMapper<Node> {
 

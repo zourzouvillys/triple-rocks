@@ -11,11 +11,11 @@ import org.apache.jena.graph.Triple;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.CodedOutputStream;
 
-import zrz.rocksdb.JRocksColumnFamily;
-import zrz.rocksdb.JRocksKeyValueIterator;
-import zrz.rocksdb.JRocksReadableWriter;
-import zrz.rocksdb.JRocksWriter;
-import zrz.rocksdb.PrefixedColumnFamily;
+import zrz.jrocks.JRocksColumnFamily;
+import zrz.jrocks.JRocksKeyValueIterator;
+import zrz.jrocks.JRocksReadableWriter;
+import zrz.jrocks.JRocksWriter;
+import zrz.jrocks.PrefixedColumnFamily;
 import zrz.triplerocks.api.TripleSlot;
 import zrz.triplerocks.jena.JenaNodeMapper;
 import zrz.triplerocks.jena.JenaTripleMapper;

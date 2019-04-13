@@ -13,13 +13,13 @@ import org.apache.jena.sparql.core.Quad;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 
-import zrz.rocksdb.JRocksBatchWithIndex;
-import zrz.rocksdb.JRocksColumnFamily;
-import zrz.rocksdb.JRocksDirectSet;
-import zrz.rocksdb.JRocksEngine;
-import zrz.rocksdb.JRocksReadableWriter;
-import zrz.rocksdb.JRocksWriter;
-import zrz.rocksdb.PrefixedColumnFamily;
+import zrz.jrocks.JRocksBatchWithIndex;
+import zrz.jrocks.JRocksColumnFamily;
+import zrz.jrocks.JRocksDirectSet;
+import zrz.jrocks.JRocksEngine;
+import zrz.jrocks.JRocksReadableWriter;
+import zrz.jrocks.JRocksWriter;
+import zrz.jrocks.PrefixedColumnFamily;
 import zrz.triplerocks.jena.JenaNodeMapper;
 
 /**

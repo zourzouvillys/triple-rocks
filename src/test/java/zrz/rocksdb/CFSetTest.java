@@ -10,6 +10,10 @@ import org.junit.Test;
 
 import triplediff.protobuf.TripleDiffProto.Term;
 import triplediff.protobuf.TripleDiffProto.Triple;
+import zrz.jrocks.JRocksBatchWithIndex;
+import zrz.jrocks.JRocksDirectSet;
+import zrz.jrocks.JRocksEngine;
+import zrz.jrocks.JRocksSet;
 import zrz.rocksdb.protobuf.ProtobufMessageMapper;
 
 public class CFSetTest {

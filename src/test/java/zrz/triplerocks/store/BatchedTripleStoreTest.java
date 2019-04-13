@@ -12,10 +12,10 @@ import org.junit.Test;
 
 import triplediff.protobuf.TripleDiffProto.Term;
 import triplediff.protobuf.TripleDiffProto.Triple;
-import zrz.rocksdb.JRocksColumnFamily;
-import zrz.rocksdb.JRocksDirectSet;
-import zrz.rocksdb.JRocksEngine;
-import zrz.rocksdb.PrefixedColumnFamily;
+import zrz.jrocks.JRocksColumnFamily;
+import zrz.jrocks.JRocksDirectSet;
+import zrz.jrocks.JRocksEngine;
+import zrz.jrocks.PrefixedColumnFamily;
 import zrz.rocksdb.protobuf.ProtobufMessageMapper;
 
 public class BatchedTripleStoreTest {

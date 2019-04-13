@@ -15,7 +15,7 @@ import org.rocksdb.FlushOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 
-import zrz.rocksdb.JRocksEngine;
+import zrz.jrocks.JRocksEngine;
 
 public class IndexedRockStoreTest {
 
