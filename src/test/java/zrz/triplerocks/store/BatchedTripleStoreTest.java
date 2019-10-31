@@ -16,7 +16,7 @@ import zrz.jrocks.JRocksColumnFamily;
 import zrz.jrocks.JRocksDirectSet;
 import zrz.jrocks.JRocksEngine;
 import zrz.jrocks.PrefixedColumnFamily;
-import zrz.rocksdb.protobuf.ProtobufMessageMapper;
+import zrz.triplerocks.protobuf.ProtobufMessageMapper;
 
 public class BatchedTripleStoreTest {
 

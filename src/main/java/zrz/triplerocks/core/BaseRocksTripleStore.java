@@ -22,8 +22,6 @@ import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteBatchWithIndex;
 import org.rocksdb.WriteOptions;
 
-import zrz.jrocks.JRocksEngine;
-
 public class BaseRocksTripleStore implements TripleRocksAPI {
 
   static final byte[] EMPTY = new byte[] {};

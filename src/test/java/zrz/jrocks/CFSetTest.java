@@ -1,4 +1,4 @@
-package zrz.rocksdb;
+package zrz.jrocks;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -14,7 +14,7 @@ import zrz.jrocks.JRocksBatchWithIndex;
 import zrz.jrocks.JRocksDirectSet;
 import zrz.jrocks.JRocksEngine;
 import zrz.jrocks.JRocksSet;
-import zrz.rocksdb.protobuf.ProtobufMessageMapper;
+import zrz.triplerocks.protobuf.ProtobufMessageMapper;
 
 public class CFSetTest {
 

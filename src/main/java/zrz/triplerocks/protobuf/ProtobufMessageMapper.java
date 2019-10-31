@@ -1,4 +1,4 @@
-package zrz.rocksdb.protobuf;
+package zrz.triplerocks.protobuf;
 
 import java.io.IOException;
 
